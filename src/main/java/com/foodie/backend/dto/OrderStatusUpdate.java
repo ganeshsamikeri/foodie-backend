@@ -1,5 +1,8 @@
 package com.foodie.backend.dto;
 
+import lombok.Getter;
+import lombok.Setter;
+
 public class OrderStatusUpdate {
 
     private Long orderId;
@@ -22,5 +25,12 @@ public class OrderStatusUpdate {
 
     public String getUserEmail() {
         return userEmail;
+    }
+
+    @Getter
+    @Setter
+    public static class RegisterRequest {
+        private String email;
+        private String password;
     }
 }
