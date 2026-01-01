@@ -18,8 +18,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http)
-            throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
                 .csrf(csrf -> csrf.disable())
@@ -29,8 +28,12 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
 
-                        // 🔓 AUTH APIs
-                        .requestMatchers("/api/auth/**").permitAll()
+                        // 🌐 PUBLIC
+                        .requestMatchers(
+                                "/",
+                                "/api/test",
+                                "/api/auth/**"
+                        ).permitAll()
 
                         // 🔐 ADMIN ONLY
                         .requestMatchers("/api/orders/admin/**")
@@ -40,8 +43,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/orders/**")
                         .authenticated()
 
-                        // 🌐 OTHERS
-                        .anyRequest().permitAll()
+                        // 🔒 EVERYTHING ELSE
+                        .anyRequest().authenticated()
                 )
                 .addFilterBefore(
                         jwtFilter,
