@@ -29,28 +29,32 @@ public class JwtFilter extends OncePerRequestFilter {
             FilterChain chain
     ) throws ServletException, IOException {
 
-        String header = request.getHeader("Authorization");
+        // ✅ Avoid overriding existing authentication
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
 
-        if (header != null && header.startsWith("Bearer ")) {
+            String header = request.getHeader("Authorization");
 
-            String token = header.substring(7);
+            if (header != null && header.startsWith("Bearer ")) {
 
-            try {
-                String email = jwtUtil.extractEmail(token);
-                String role = jwtUtil.extractRole(token);
+                String token = header.substring(7);
 
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(
-                                email,
-                                null,
-                                List.of(new SimpleGrantedAuthority("ROLE_" + role))
-                        );
+                try {
+                    String email = jwtUtil.extractEmail(token);
+                    String role = jwtUtil.extractRole(token);
 
-                SecurityContextHolder.getContext()
-                        .setAuthentication(authToken);
+                    UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(
+                                    email,
+                                    null,
+                                    List.of(new SimpleGrantedAuthority("ROLE_" + role))
+                            );
 
-            } catch (Exception e) {
-                // Invalid token → ignore & continue
+                    SecurityContextHolder.getContext()
+                            .setAuthentication(authToken);
+
+                } catch (Exception e) {
+                    // Invalid token → do nothing (request will be rejected later)
+                }
             }
         }
 

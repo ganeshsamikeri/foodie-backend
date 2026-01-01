@@ -3,13 +3,9 @@ package com.foodie.backend.config;
 import com.foodie.backend.security.JwtFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -19,6 +15,7 @@ public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
 
+    // ✅ Explicit constructor (fixes IntelliJ + Lombok confusion)
     public SecurityConfig(JwtFilter jwtFilter) {
         this.jwtFilter = jwtFilter;
     }
@@ -27,60 +24,36 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-                // ❌ Disable CSRF (required for REST APIs & Postman)
                 .csrf(csrf -> csrf.disable())
-
-                // ✅ Enable CORS (frontend + Postman)
                 .cors(cors -> {})
-
-                // 🔐 Stateless JWT security
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-
-                // 🔑 Authorization rules
                 .authorizeHttpRequests(auth -> auth
 
-                        // 🌐 PUBLIC APIs (NO TOKEN REQUIRED)
+                        // 🌍 PUBLIC
                         .requestMatchers(
                                 "/",
                                 "/api/health",
-                                "/api/test",
                                 "/api/auth/**"
                         ).permitAll()
 
-                        // 🔴 ADMIN ONLY APIs
-                        .requestMatchers("/api/orders/admin/**")
+                        // 🔐 ADMIN ONLY
+                        .requestMatchers("/api/admin/**")
                         .hasRole("ADMIN")
 
-                        // 👤 USER + ADMIN APIs
+                        // 👤 USER & ADMIN
                         .requestMatchers("/api/orders/**")
                         .authenticated()
 
-                        // 🔒 Everything else needs authentication
+                        // 🔒 EVERYTHING ELSE
                         .anyRequest().authenticated()
                 )
-
-                // 🔄 JWT filter
                 .addFilterBefore(
                         jwtFilter,
                         UsernamePasswordAuthenticationFilter.class
                 );
 
         return http.build();
-    }
-
-    // ✅ Required for authentication (login)
-    @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration configuration
-    ) throws Exception {
-        return configuration.getAuthenticationManager();
-    }
-
-    // ✅ Password encoder
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
     }
 }
