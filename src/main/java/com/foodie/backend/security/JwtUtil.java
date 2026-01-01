@@ -47,22 +47,16 @@ public class JwtUtil {
                 .getBody();
     }
 
-    /* =========================
-       EXTRACT EMAIL
-    ========================= */
     public String extractEmail(String token) {
         return extractAllClaims(token).getSubject();
     }
 
-    /* =========================
-       EXTRACT ROLE
-    ========================= */
     public String extractRole(String token) {
         return extractAllClaims(token).get("role", String.class);
     }
 
     /* =========================
-       🔐 AUTHENTICATION (HTTP + WEBSOCKET)
+       AUTH FOR WEBSOCKET / HTTP
     ========================= */
     public Authentication getAuthentication(String token) {
 
