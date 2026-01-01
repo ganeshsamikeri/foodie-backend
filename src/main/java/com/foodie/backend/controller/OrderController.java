@@ -2,7 +2,6 @@ package com.foodie.backend.controller;
 
 import com.foodie.backend.dto.OrderItemDTO;
 import com.foodie.backend.dto.OrderResponseDTO;
-import com.foodie.backend.dto.ReorderResponseDTO;
 import com.foodie.backend.model.Food;
 import com.foodie.backend.model.Order;
 import com.foodie.backend.model.OrderItem;
@@ -16,12 +15,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/orders")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "*")
 public class OrderController {
 
     private final OrderRepository orderRepository;
@@ -98,7 +98,7 @@ public class OrderController {
     }
 
     /* =====================================================
-       📦 MY ORDERS
+       📦 MY ORDERS (USER)
     ===================================================== */
     @GetMapping("/my-orders")
     @Transactional(readOnly = true)

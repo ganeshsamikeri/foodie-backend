@@ -29,32 +29,30 @@ public class JwtFilter extends OncePerRequestFilter {
             FilterChain chain
     ) throws ServletException, IOException {
 
-        // ✅ Avoid overriding existing authentication
-        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+        String header = request.getHeader("Authorization");
 
-            String header = request.getHeader("Authorization");
+        if (header != null && header.startsWith("Bearer ")) {
 
-            if (header != null && header.startsWith("Bearer ")) {
+            String token = header.substring(7);
 
-                String token = header.substring(7);
+            try {
+                String email = jwtUtil.extractEmail(token);
+                String role = jwtUtil.extractRole(token); // USER / ADMIN
 
-                try {
-                    String email = jwtUtil.extractEmail(token);
-                    String role = jwtUtil.extractRole(token);
+                UsernamePasswordAuthenticationToken authToken =
+                        new UsernamePasswordAuthenticationToken(
+                                email,
+                                null,
+                                List.of(
+                                        new SimpleGrantedAuthority("ROLE_" + role)
+                                )
+                        );
 
-                    UsernamePasswordAuthenticationToken authToken =
-                            new UsernamePasswordAuthenticationToken(
-                                    email,
-                                    null,
-                                    List.of(new SimpleGrantedAuthority("ROLE_" + role))
-                            );
+                SecurityContextHolder.getContext()
+                        .setAuthentication(authToken);
 
-                    SecurityContextHolder.getContext()
-                            .setAuthentication(authToken);
-
-                } catch (Exception e) {
-                    // Invalid token → do nothing (request will be rejected later)
-                }
+            } catch (Exception e) {
+                // invalid token → ignore
             }
         }
 
