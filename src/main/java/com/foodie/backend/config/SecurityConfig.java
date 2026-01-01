@@ -1,7 +1,6 @@
 package com.foodie.backend.config;
 
 import com.foodie.backend.security.JwtFilter;
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -17,7 +16,6 @@ import java.util.List;
 
 @Configuration
 @EnableMethodSecurity
-@RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
@@ -31,41 +29,48 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
+                // ❌ Disable CSRF (JWT based)
                 .csrf(csrf -> csrf.disable())
 
+                // ✅ Enable CORS
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
+                // ❌ Stateless session
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
+                // 🔐 Authorization rules
                 .authorizeHttpRequests(auth -> auth
 
-                        // ✅ PUBLIC ENDPOINTS
+                        // 🌍 Public APIs
                         .requestMatchers(
                                 "/",
                                 "/api/health",
-                                "/api/env-check",
                                 "/api/auth/**"
                         ).permitAll()
 
-                        // 👤 USER + ADMIN
+                        // 👤 User + Admin
                         .requestMatchers("/api/orders/**")
                         .hasAnyRole("USER", "ADMIN")
 
-                        // 🔐 ADMIN ONLY
+                        // 🔒 Admin only
                         .requestMatchers("/api/admin/**")
                         .hasRole("ADMIN")
 
+                        // 🔐 Everything else
                         .anyRequest().authenticated()
                 )
 
+                // 🔑 JWT filter
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    // ✅ CORS (Vercel + Local)
+    /**
+     * ✅ CORS CONFIG (REQUIRED FOR REACT + VERCEL)
+     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
@@ -81,7 +86,6 @@ public class SecurityConfig {
         ));
 
         config.setAllowedHeaders(List.of("*"));
-        config.setExposedHeaders(List.of("Authorization"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source =
