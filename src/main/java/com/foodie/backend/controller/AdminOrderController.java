@@ -3,7 +3,6 @@ package com.foodie.backend.controller;
 import com.foodie.backend.dto.OrderStatusUpdate;
 import com.foodie.backend.model.Order;
 import com.foodie.backend.repository.OrderRepository;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,21 +13,16 @@ import org.springframework.web.bind.annotation.*;
 public class AdminOrderController {
 
     private final OrderRepository orderRepository;
-    private final SimpMessagingTemplate messagingTemplate;
 
-    public AdminOrderController(
-            OrderRepository orderRepository,
-            SimpMessagingTemplate messagingTemplate
-    ) {
+    public AdminOrderController(OrderRepository orderRepository) {
         this.orderRepository = orderRepository;
-        this.messagingTemplate = messagingTemplate;
     }
 
     /* =====================================================
-       🔄 UPDATE ORDER STATUS
+       🔄 UPDATE ORDER STATUS (REST ONLY)
     ===================================================== */
     @PutMapping("/{id}/status")
-    public void updateStatus(
+    public OrderStatusUpdate updateStatus(
             @PathVariable Long id,
             @RequestParam String status
     ) {
@@ -39,23 +33,10 @@ public class AdminOrderController {
         order.setOrderStatus(updatedStatus);
         orderRepository.save(order);
 
-        OrderStatusUpdate payload =
-                new OrderStatusUpdate(
-                        order.getId(),
-                        updatedStatus,
-                        order.getUserEmail()
-                );
-
-        // 🔴 ADMIN DASHBOARD (optional)
-        messagingTemplate.convertAndSend(
-                "/topic/admin/orders",
-                payload
-        );
-
-        // 🔴 USER MY-ORDERS (IMPORTANT)
-        messagingTemplate.convertAndSend(
-                "/topic/orders/" + order.getUserEmail(),
-                payload
+        return new OrderStatusUpdate(
+                order.getId(),
+                updatedStatus,
+                order.getUserEmail()
         );
     }
 
@@ -63,7 +44,7 @@ public class AdminOrderController {
        ❌ CANCEL ORDER
     ===================================================== */
     @PutMapping("/{id}/cancel")
-    public void cancelOrder(@PathVariable Long id) {
+    public OrderStatusUpdate cancelOrder(@PathVariable Long id) {
 
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
@@ -75,17 +56,10 @@ public class AdminOrderController {
         order.setOrderStatus("CANCELLED");
         orderRepository.save(order);
 
-        OrderStatusUpdate payload =
-                new OrderStatusUpdate(
-                        order.getId(),
-                        "CANCELLED",
-                        order.getUserEmail()
-                );
-
-        // 🔴 USER LIVE UPDATE
-        messagingTemplate.convertAndSend(
-                "/topic/orders/" + order.getUserEmail(),
-                payload
+        return new OrderStatusUpdate(
+                order.getId(),
+                "CANCELLED",
+                order.getUserEmail()
         );
     }
 }
