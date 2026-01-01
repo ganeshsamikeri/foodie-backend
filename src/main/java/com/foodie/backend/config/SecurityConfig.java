@@ -1,7 +1,6 @@
 package com.foodie.backend.config;
 
 import com.foodie.backend.security.JwtFilter;
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -17,22 +16,26 @@ import java.util.List;
 
 @Configuration
 @EnableMethodSecurity
-@RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
 
+    // ✅ MANUAL CONSTRUCTOR (FIXES ERROR)
+    public SecurityConfig(JwtFilter jwtFilter) {
+        this.jwtFilter = jwtFilter;
+    }
+
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-                // ❌ Disable CSRF (JWT + REST)
+                // ❌ Disable CSRF (JWT based)
                 .csrf(csrf -> csrf.disable())
 
-                // ✅ ENABLE CORS (IMPORTANT)
+                // ✅ Enable CORS
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-                // ❌ Disable sessions
+                // ❌ Stateless session
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
@@ -40,51 +43,55 @@ public class SecurityConfig {
                 // 🔐 Authorization rules
                 .authorizeHttpRequests(auth -> auth
 
-                        // 🌐 PUBLIC ENDPOINTS
+                        // 🌍 Public APIs
                         .requestMatchers(
                                 "/",
                                 "/api/health",
                                 "/api/auth/**"
                         ).permitAll()
 
-                        // 👤 USER + ADMIN
+                        // 👤 User + Admin
                         .requestMatchers("/api/orders/**")
                         .hasAnyRole("USER", "ADMIN")
 
-                        // 🔐 ADMIN ONLY
+                        // 🔒 Admin only
                         .requestMatchers("/api/admin/**")
                         .hasRole("ADMIN")
 
-                        // 🔒 EVERYTHING ELSE
+                        // 🔐 Everything else
                         .anyRequest().authenticated()
                 )
 
-                // 🔑 JWT FILTER
+                // 🔑 JWT filter
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
     /**
-     * ✅ CORS CONFIGURATION
-     * Required for browser + frontend + Render
+     * ✅ CORS CONFIG (REQUIRED FOR REACT + VERCEL)
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
         CorsConfiguration config = new CorsConfiguration();
+
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173",
-                "https://your-frontend.vercel.app" // change if needed
+                "https://foodie-app-navy.vercel.app"
         ));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+
+        config.setAllowedMethods(List.of(
+                "GET", "POST", "PUT", "DELETE", "OPTIONS"
+        ));
+
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
 
+        source.registerCorsConfiguration("/**", config);
         return source;
     }
 }
