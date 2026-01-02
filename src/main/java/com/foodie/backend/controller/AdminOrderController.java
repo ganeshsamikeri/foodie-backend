@@ -6,9 +6,10 @@ import com.foodie.backend.repository.OrderRepository;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/admin/orders")
-@CrossOrigin(origins = "http://localhost:5173")
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminOrderController {
 
@@ -18,9 +19,13 @@ public class AdminOrderController {
         this.orderRepository = orderRepository;
     }
 
-    /* =====================================================
-       🔄 UPDATE ORDER STATUS (REST ONLY)
-    ===================================================== */
+    // ✅ GET ALL ORDERS (ADMIN)
+    @GetMapping("/all")
+    public List<Order> getAllOrders() {
+        return orderRepository.findAll();
+    }
+
+    // ✅ UPDATE ORDER STATUS
     @PutMapping("/{id}/status")
     public OrderStatusUpdate updateStatus(
             @PathVariable Long id,
@@ -40,9 +45,7 @@ public class AdminOrderController {
         );
     }
 
-    /* =====================================================
-       ❌ CANCEL ORDER
-    ===================================================== */
+    // ✅ CANCEL ORDER
     @PutMapping("/{id}/cancel")
     public OrderStatusUpdate cancelOrder(@PathVariable Long id) {
 

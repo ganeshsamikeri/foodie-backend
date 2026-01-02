@@ -11,7 +11,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/dashboard")
-@CrossOrigin(origins = "http://localhost:5173")
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminDashboardController {
 
@@ -27,17 +26,21 @@ public class AdminDashboardController {
         List<Order> orders = orderRepository.findAll();
 
         long totalOrders = orders.size();
+
         long delivered = orders.stream()
                 .filter(o -> "DELIVERED".equals(o.getOrderStatus()))
                 .count();
+
         long cancelled = orders.stream()
                 .filter(o -> "CANCELLED".equals(o.getOrderStatus()))
                 .count();
+
         long pending = orders.stream()
                 .filter(o ->
                         !"DELIVERED".equals(o.getOrderStatus()) &&
                                 !"CANCELLED".equals(o.getOrderStatus())
-                ).count();
+                )
+                .count();
 
         double revenue = orders.stream()
                 .filter(o -> "DELIVERED".equals(o.getOrderStatus()))

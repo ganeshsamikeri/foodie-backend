@@ -22,13 +22,9 @@ public class JwtFilter extends OncePerRequestFilter {
         this.jwtUtil = jwtUtil;
     }
 
-    /**
-     * Skip JWT validation for public endpoints
-     */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-
         return path.startsWith("/api/auth")
                 || path.startsWith("/api/health")
                 || path.equals("/");
@@ -41,7 +37,6 @@ public class JwtFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        // ✅ Do not override existing authentication
         if (SecurityContextHolder.getContext().getAuthentication() != null) {
             filterChain.doFilter(request, response);
             return;
@@ -49,7 +44,6 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String header = request.getHeader("Authorization");
 
-        // ❌ No token → continue
         if (header == null || !header.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -61,18 +55,16 @@ public class JwtFilter extends OncePerRequestFilter {
             String email = jwtUtil.extractEmail(token);
             String role = jwtUtil.extractRole(token);
 
-            UsernamePasswordAuthenticationToken authentication =
+            UsernamePasswordAuthenticationToken auth =
                     new UsernamePasswordAuthenticationToken(
                             email,
                             null,
                             List.of(new SimpleGrantedAuthority("ROLE_" + role))
                     );
 
-            SecurityContextHolder.getContext()
-                    .setAuthentication(authentication);
+            SecurityContextHolder.getContext().setAuthentication(auth);
 
         } catch (Exception e) {
-            // ❌ Invalid / expired token
             SecurityContextHolder.clearContext();
         }
 

@@ -15,20 +15,28 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /* ================= USER ================= */
     @Column(nullable = false)
     private String userEmail;
 
+    /* ================= ORDER STATUS ================= */
     @Column(nullable = false)
-    private String orderStatus;
+    private String orderStatus;   // PLACED, CONFIRMED, DELIVERED, CANCELLED
 
+    /* ================= AMOUNT ================= */
     private Double totalAmount;
+
+    /* ================= TIMESTAMP ================= */
     private LocalDateTime createdAt;
 
+    /* ================= FLAGS ================= */
     private Boolean cancelled = false;
 
+    /* ================= DELIVERY LOCATION ================= */
     private Double deliveryLat;
     private Double deliveryLng;
 
+    /* ================= ORDER ITEMS ================= */
     @OneToMany(
             mappedBy = "order",
             cascade = CascadeType.ALL,
@@ -38,7 +46,13 @@ public class Order {
     @JsonManagedReference
     private List<OrderItem> items = new ArrayList<>();
 
-    /* ===== GETTERS & SETTERS ===== */
+    /* ================= AUTO TIMESTAMP ================= */
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
+
+    /* ================= GETTERS & SETTERS ================= */
 
     public Long getId() {
         return id;
@@ -70,10 +84,6 @@ public class Order {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
     }
 
     public Boolean getCancelled() {

@@ -20,7 +20,6 @@ public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
 
-    // ✅ MANUAL CONSTRUCTOR (FIXES ERROR)
     public SecurityConfig(JwtFilter jwtFilter) {
         this.jwtFilter = jwtFilter;
     }
@@ -29,48 +28,32 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-                // ❌ Disable CSRF (JWT based)
                 .csrf(csrf -> csrf.disable())
 
-                // ✅ Enable CORS
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-                // ❌ Stateless session
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
-                // 🔐 Authorization rules
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/", "/api/health", "/api/auth/**")
+                        .permitAll()
 
-                        // 🌍 Public APIs
-                        .requestMatchers(
-                                "/",
-                                "/api/health",
-                                "/api/auth/**"
-                        ).permitAll()
-
-                        // 👤 User + Admin
                         .requestMatchers("/api/orders/**")
                         .hasAnyRole("USER", "ADMIN")
 
-                        // 🔒 Admin only
                         .requestMatchers("/api/admin/**")
                         .hasRole("ADMIN")
 
-                        // 🔐 Everything else
                         .anyRequest().authenticated()
                 )
 
-                // 🔑 JWT filter
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    /**
-     * ✅ CORS CONFIG (REQUIRED FOR REACT + VERCEL)
-     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
