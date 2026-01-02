@@ -14,14 +14,18 @@ import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/orders")
-@CrossOrigin(origins = "*")
+@CrossOrigin(
+        origins = {
+                "http://localhost:5173",
+                "https://foodie-app-navy.vercel.app"
+        }
+)
 public class OrderController {
 
     private final OrderRepository orderRepository;
@@ -47,7 +51,6 @@ public class OrderController {
             @RequestBody List<OrderItemDTO> items,
             Authentication auth
     ) {
-
         if (auth == null || !auth.isAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body("User not authenticated");
@@ -63,8 +66,6 @@ public class OrderController {
         Order order = new Order();
         order.setUserEmail(email);
         order.setOrderStatus("PLACED");
-        order.setCreatedAt(LocalDateTime.now());
-        order.setCancelled(false);
         order.setTotalAmount(0.0);
 
         Order savedOrder = orderRepository.save(order);
@@ -119,16 +120,17 @@ public class OrderController {
             dto.setStatus(order.getOrderStatus());
             dto.setCreatedAt(order.getCreatedAt());
             dto.setTotalAmount(order.getTotalAmount());
-            dto.setCancelled(order.getCancelled());
 
-            dto.setItems(order.getItems().stream().map(item -> {
-                OrderItemDTO i = new OrderItemDTO();
-                i.setFoodId(item.getFood().getId());
-                i.setFoodName(item.getFood().getName());
-                i.setPrice(item.getPrice());
-                i.setQuantity(item.getQuantity());
-                return i;
-            }).collect(Collectors.toList()));
+            dto.setItems(
+                    order.getItems().stream().map(item -> {
+                        OrderItemDTO i = new OrderItemDTO();
+                        i.setFoodId(item.getFood().getId());
+                        i.setFoodName(item.getFood().getName());
+                        i.setPrice(item.getPrice());
+                        i.setQuantity(item.getQuantity());
+                        return i;
+                    }).collect(Collectors.toList())
+            );
 
             return dto;
         }).collect(Collectors.toList());
@@ -145,7 +147,6 @@ public class OrderController {
             @PathVariable Long orderId,
             Authentication auth
     ) {
-
         if (auth == null || !auth.isAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body("User not authenticated");
@@ -167,7 +168,6 @@ public class OrderController {
                     .body("Order cannot be cancelled at this stage");
         }
 
-        order.setCancelled(true);
         order.setOrderStatus("CANCELLED");
         orderRepository.save(order);
 
