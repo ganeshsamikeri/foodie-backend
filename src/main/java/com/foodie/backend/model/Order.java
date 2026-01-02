@@ -10,32 +10,26 @@ import java.util.List;
 @Entity
 @Table(name = "orders")
 public class Order {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /* ================= USER ================= */
     @Column(nullable = false)
     private String userEmail;
 
-    /* ================= ORDER STATUS ================= */
     @Column(nullable = false)
-    private String orderStatus;   // PLACED, CONFIRMED, DELIVERED, CANCELLED
+    private String orderStatus;
 
-    /* ================= AMOUNT ================= */
+    @Column(nullable = false)
     private Double totalAmount;
 
-    /* ================= TIMESTAMP ================= */
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    /* ================= FLAGS ================= */
-    private Boolean cancelled = false;
-
-    /* ================= DELIVERY LOCATION ================= */
     private Double deliveryLat;
     private Double deliveryLng;
 
-    /* ================= ORDER ITEMS ================= */
     @OneToMany(
             mappedBy = "order",
             cascade = CascadeType.ALL,
@@ -45,13 +39,20 @@ public class Order {
     @JsonManagedReference
     private List<OrderItem> items = new ArrayList<>();
 
-    /* ================= AUTO TIMESTAMP ================= */
+    /* =========================
+       JPA LIFECYCLE
+    ========================= */
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
+        if (this.orderStatus == null) {
+            this.orderStatus = "PLACED";
+        }
     }
 
-    /* ================= GETTERS & SETTERS ================= */
+    /* =========================
+       GETTERS & SETTERS
+    ========================= */
 
     public Long getId() {
         return id;
@@ -85,22 +86,6 @@ public class Order {
         return createdAt;
     }
 
-    public Boolean getCancelled() {
-        return cancelled;
-    }
-
-    public void setCancelled(Boolean cancelled) {
-        this.cancelled = cancelled;
-    }
-
-    public List<OrderItem> getItems() {
-        return items;
-    }
-
-    public void setItems(List<OrderItem> items) {
-        this.items = items;
-    }
-
     public Double getDeliveryLat() {
         return deliveryLat;
     }
@@ -115,5 +100,13 @@ public class Order {
 
     public void setDeliveryLng(Double deliveryLng) {
         this.deliveryLng = deliveryLng;
+    }
+
+    public List<OrderItem> getItems() {
+        return items;
+    }
+
+    public void setItems(List<OrderItem> items) {
+        this.items = items;
     }
 }
